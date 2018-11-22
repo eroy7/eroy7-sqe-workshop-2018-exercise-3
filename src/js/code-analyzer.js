@@ -7,6 +7,8 @@ const parseCode = (codeToParse) => {
     return parsedList;
 };
 
+//code
+
 const parseItemMap = {'FunctionDeclaration': (item)=> {return parseFuncDec(item);},
     'BlockStatement': (item)=> {return Array.from(item.body).reduce((acc,curr)=>acc.concat(parseItem(curr)),[]);},
     'VariableDeclaration': (item)=> {return parseVarDec(item);},
