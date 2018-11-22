@@ -21,6 +21,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "ejs": "^2.6.1",
         "esprima": "^4.0.0",
         "jquery": "^3.3.1"
     },
