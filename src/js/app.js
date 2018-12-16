@@ -1,16 +1,23 @@
 import $ from 'jquery';
-import {parseCode} from './code-analyzer';
+import {parseCode,subInputVector} from './code-analyzer';
 
 $(document).ready(function () {
     $('#codeSubmissionButton').click(() => {
         let codeToParse = $('#codePlaceholder').val();
+        let inputVecor = $('#inputVector').val()===''?null:JSON.parse($('#inputVector').val());
         let parsedCode = parseCode(codeToParse);
-
-        $('#parsedCode').empty();
-        $('#parsedCode').append(' <tr style="background: aqua; border: solid black 1px;"><th>Line</th><th>Type</th><th>Name</th><<th>Condition</th><th>Value</th><<</tr>');
-
+        //('#codePlaceholder').val(JSON.stringify(parsedCode));
+        //$('#linesToPrint').val(JSON.stringify(parsedCode, null, 2));
+        $('#linesToPrint').empty();
         parsedCode.forEach((line)=>{
-            $('#parsedCode').append( '<tr style="border: solid black 1px;"><td>'+line.Line+'</td><td>'+line.Type+'</td><td>'+line.Name+'</td><td>'+line.Condition+'</td><td>'+line.Value+'</td></tr>' );
+            if(inputVecor != null && line.includes('if')) {
+                if (subInputVector(line.split('if')[1].substring(0, line.split('if')[1].length - 1), inputVecor))
+                    $('#lin0esToPrint').append('<p style="background: greenyellow">' + line + '<br></p>');
+                else
+                    $('#linesToPrint').append( '<p style="background: firebrick">'+line+'<br></p>' );
+            }
+            else
+                $('#linesToPrint').append( '<p>'+line+'<br></p>' );
         });
     });
 });

@@ -1,109 +1,238 @@
-import * as esprima from 'esprima';
+ import * as esprima from 'esprima';
+import * as escodegen from 'escodegen';
+
+let params = [];
 
 const parseCode = (codeToParse) => {
-    let parsedList = [];
-    let parsedCode = esprima.parseScript(codeToParse,{loc:true});
-    parsedList = Array.from(parsedCode.body).reduce((acc,curr)=>acc.concat(parseItem(curr)),parsedList);
-    return parsedList;
+    params = [];
+    let parsedCode = esprima.parseScript(codeToParse);
+    let functionToSub = [];
+    let env = [];
+    //parsedList = Array.from(parsedCode.body).reduce((acc,curr)=>acc.concat(parseItem(curr)),parsedList);
+    parsedCode.body.map((item) => {
+        if(item.type === 'FunctionDeclaration')
+            functionToSub = item;
+        else /*if(item.type === 'VariableDeclaration')*/
+            env = env.concat(handleVarDec(item,env));
+    });
+    parsedCode.body = [];
+    params = functionToSub.params;
+    parsedCode.body[0] = handleFunction(functionToSub,env);
+    return escodegen.generate(parsedCode).split('\n');
 };
 
 //code
 
-const parseItemMap = {'FunctionDeclaration': (item)=> {return parseFuncDec(item);},
-    'BlockStatement': (item)=> {return Array.from(item.body).reduce((acc,curr)=>acc.concat(parseItem(curr)),[]);},
-    'VariableDeclaration': (item)=> {return parseVarDec(item);},
-    'ExpressionStatement': (item)=> {return parseExpStmt(item);},
-    'WhileStatement': (item)=> {return parseWhile(item);},
-    'IfStatement': (item)=> {return parseIf(item);},
-    'ReturnStatement': (item)=> {return [{Line: item.loc.start.line, Type: 'return statement', Name: '', Condition: '', Value: parseExp(item.argument)}];},
-    'ForStatement': (item)=> {return parseFor(item);},
-    'AssignmentExpression': (item)=> {return parseAssStmt(item);},
-    'UpdateExpression': (item)=>{return item.prefix?[{Line: item.loc.start.line, Type: 'assignment statement', Name: item.argument.name, Condition: '', Value: item.operator + item.argument.name}]:[{Line: item.loc.start.line, Type: 'assignment statement', Name: item.argument.name, Condition: '', Value: item.argument.name + item.operator}];},
+const handleItemMap = {/*'FunctionDeclaration': (item)=> {return parseFuncDec(item);},*/
+    /*'BlockStatement': (item,env)=> {item.body = Array.from(item.body).reduce((acc,curr)=>acc.concat(handleItem(curr,env)),[]); return item;},
+    'VariableDeclaration': (item,env)=> {return handleVarDec(item,env);},
+    'ExpressionStatement': (item,env)=> {item.expression = handleItem(item.expression,env); return item;},*/
+    'WhileStatement': (item,env)=> {return handleWhile(item,env);},
+    'IfStatement': (item,env)=> {return handleIf(item,env);},
+    'ReturnStatement': (item,env)=> {item.argument = subLeft(item.argument,env); return item;},
+    'ForStatement': (item,env)=> {return handleFor(item,env);},
+    //'AssignmentExpression': (item,env)=> {item.right = subLeft(item.right,env); return item;},
+    'UpdateExpression': (item)=>{return item;},
 };
 
-const parseItem = (item) => {
-    return parseItemMap[item.type](item);
+const handleItem = (item,env) => {
+    return handleItemMap[item.type](item,env);
 };
 
-const parseFor = (item) => {
-    let list = [{Line: item.test.loc.start.line, Type: 'for statement', Name: '', Condition: parseExp(item.test), Value: ''}];
-    list = list.concat(parseItem(item.init));
-    list = list.concat(parseItem(item.update));
-    list = list.concat(parseItem(item.body));
-    return list;
-};
-
-const parseIf = (item) => {
-    let list = [{Line: item.test.loc.start.line, Type: 'if statement', Name: '', Condition: parseExp(item.test), Value: ''}];
-    list = list.concat(parseItem(item.consequent));
-    if(item.alternate != null && item.alternate.type === 'IfStatement')
-        list = list.concat(parseElseIf(item.alternate));
-    else if(item.alternate != null )
-        list = list.concat(parseItem(item.alternate));
-    return list;
-};
-
-const parseElseIf = (item) => {
-    let list = [{Line: item.test.loc.start.line, Type: 'else if statement', Name: '', Condition: parseExp(item.test), Value: ''}];
-    list = list.concat(parseItem(item.consequent));
-    if(item.alternate != null && item.alternate.type === 'IfStatement')
-        list = list.concat(parseElseIf(item.alternate));
-    else if(item.alternate != null )
-        list = list.concat(parseItem(item.alternate));
-    return list;
-};
-
-const parseWhile = (item) => {
-    let list = [{Line: item.test.loc.start.line, Type: 'while statement', Name: '', Condition: parseExp(item.test), Value: ''}];
-    return list.concat(parseItem(item.body));
-};
-
-const parseExpStmt = (item) => {
-    if(item.expression.type === 'AssignmentExpression' && item.expression.operator === '='){
-        return [{Line: item.expression.left.loc.start.line, Type: 'assignment expression', Name: item.expression.left.name, Condition: ' ',Value: parseExp(item.expression.right)}];
+const handleFor = (item,env) => {
+    item.init.right = subLeft(item.init.right,env);
+    item.test = subLeft(item.test,env);
+    item.update = handleItem(item.update,env);
+    if(item.body.type === 'BlockStatement') {
+        item.body.body = Array.from(item.body.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
+        item.body.body = item.body.body.filter((item) => filterLines(item));
     }
+    else /*if(item.body.type === 'ExpressionStatement' && item.body.expression.type === 'AssignmentExpression')*/{
+        item.body.expression.right= subLeft(item.body.expression.right,env);
+        //env = Array.from(env).map((ass) => {if(ass.Key === item.body.expression.left.name) ass.Value = item.body.expression.right; return ass;});
+    }
+    /*else if(item.body.type === 'AssignmentExpression'){
+        env = env.concat(handleAssStmt(item.body, env));
+        item.body.right= subLeft(item.body.right,env);
+    }*/
+    return item;
+};
+
+const handleIf = (item,env) => {
+    let defEnv = env.reduce((acc,curr) => acc.concat({Key: curr.Key, Value: curr.Value}),[]);
+    item.test = subLeft(item.test, env);
+    handleConsequent(item,env);
+    if (item.alternate != null)
+        handleAlternate(item,defEnv);
+    return item;
+};
+
+const handleConsequent = (item,env) => {
+    if(item.consequent.type === 'BlockStatement') {
+        item.consequent.body = Array.from(item.consequent.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
+        item.consequent.body = item.consequent.body.filter((item) => filterLines(item));
+    }
+    else /*if(item.consequent.type === 'ExpressionStatement' && item.consequent.expression.type === 'AssignmentExpression')*/{
+        item.consequent.expression.right= subLeft(item.consequent.expression.right,env);
+        //env = Array.from(env).map((ass) => {if(ass.Key === item.consequent.expression.left.name) ass.Value = item.consequent.expression.right; return ass;});
+    }
+    /*else if(item.consequent.type === 'AssignmentExpression'){
+        env = env.concat(handleAssStmt(item.consequent, env));
+        item.consequent.right= subLeft(item.consequent.right,env);
+    }*/
+};
+
+const handleAlternate = (item, defEnv) => {
+    if(item.alternate.type === 'BlockStatement') {
+        item.alternate.body = Array.from(item.alternate.body).reduce((acc, curr) => {return handleBody(acc, curr, defEnv);}, []);
+        item.alternate.body = item.alternate.body.filter((item) => filterLines(item));
+    }
+    else if(item.alternate.type === 'ExpressionStatement' && item.alternate.expression.type === 'AssignmentExpression'){
+        item.alternate.expression.right= subLeft(item.alternate.expression.right,defEnv);
+        //defEnv = Array.from(defEnv).map((ass) => {if(ass.Key === item.alternate.expression.left.name) ass.Value = item.alternate.expression.right; return ass;});
+    }
+    /*else if(item.alternate.type === 'AssignmentExpression'){
+        defEnv = defEnv.concat(handleAssStmt(item.alternate, defEnv));
+        item.alternate.right= subLeft(item.alternate.right,defEnv);
+    }*/
     else
-        return parseItem(item.expression);
-
+        item.alternate = handleItem(item.alternate,defEnv);
 };
 
-const parseAssStmt = (item) =>{
-    return [{Line: item.left.loc.start.line, Type: 'assignment expression', Name: item.left.name, Condition: ' ',Value: parseExp(item.right)}];
+const handleBody = (acc,curr,env) => {
+    if(curr.type === 'VariableDeclaration') {
+        env = env.concat(handleVarDec(curr, env));
+        curr.declarations[0].init = subLeft(curr.declarations[0].init,env);
+        return acc.concat(curr);
+    }
+    else if(curr.type === 'ExpressionStatement' && curr.expression.type === 'AssignmentExpression'){
+        curr.expression.right= subLeft(curr.expression.right,env);
+        env = Array.from(env).map((ass) => {if(ass.Key === curr.expression.left.name) ass.Value = curr.expression.right; return ass;});
+        return acc.concat(curr);
+    }
+    /*else if(curr.type === 'AssignmentExpression'){
+        env = env.concat(handleAssStmt(curr, env));
+        curr.right= subLeft(curr.right,env);
+        return acc.concat(curr);
+    }*/
+    else
+        return acc.concat(handleItem(curr,env));
 };
 
-const parseExp = (exp) => {
-    return parseExpMap[exp.type](exp);
+const handleWhile = (item,env) => {
+    item.test = subLeft(item.test, env);
+    if(item.body.type === 'BlockStatement') {
+        item.body.body = Array.from(item.body.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
+        item.body.body = item.body.body.filter((item) => filterLines(item));
+    }
+    else /*if(item.body.type === 'ExpressionStatement' && item.body.expression.type === 'AssignmentExpression')*/{
+        item.body.expression.right= subLeft(item.body.expression.right,env);
+        //env = Array.from(env).map((ass) => {if(ass.Key === item.body.expression.left.name) ass.Value = item.body.expression.right; return ass;});
+    }
+    /*else if(item.body.type === 'AssignmentExpression'){
+        env = env.concat(handleAssStmt(item.body, env));
+        item.body.right= subLeft(item.body.right,env);
+    }*/
+    return item;
 };
 
-const parseExpMap = {'Literal': (exp)=> {return exp.raw;},
-    'BinaryExpression': (exp)=> {return (complexTypes.includes(exp.left.type)?('('+parseExp(exp.left)+')'):parseExp(exp.left))
-                                + ' ' +exp.operator + ' '
-                                + (complexTypes.includes(exp.right.type)?('('+parseExp(exp.right)+')'):parseExp(exp.right));},
-    'Identifier': (exp)=> {return exp.name;},
-    'UnaryExpression': (exp)=> {return exp.operator + (complexTypes.includes(exp.argument.type)?('('+parseExp(exp.argument)+')'):parseExp(exp.argument));},
-    'MemberExpression': (exp)=> {return parseExp(exp.object)+ '[' + parseExp(exp.property) +']';},
-    'UpdateExpression': (exp)=> {return parseExp(exp.argument) + exp.operator;},
+/*const handleAssStmt = (item,env) =>{
+    item.right = subLeft(item.right,env);
+    return [{Key: item.left.name , Value: item.right}];
+};*/
+
+const subLeft = (exp,env) => {
+    exp = subLeftMap[exp.type](exp,env);
+    return exp;
+};
+
+const subLeftMap = {'Literal': (exp/*,env*/)=> {/*env.map((ass) => {if(ass.Key === exp.raw)exp=ass.Value;});*/ return exp;},
+    'BinaryExpression': (exp,env)=> {exp.left = subLeft(exp.left,env); exp.right = subLeft(exp.right,env); return exp;},
+    'Identifier': (exp,env)=> {Array.from(env).map((ass) => {if(ass.Key === exp.name)exp=ass.Value;}); return exp;},
+    'UnaryExpression': (exp,env)=> {exp.argument = subLeft(exp.argument,env); return exp;},
+    //'MemberExpression': (exp,env)=> {exp.object = subLeft(exp.object,env); exp.property = subLeft(exp.property,env); return exp;},
+    /*'UpdateExpression': (exp)=> {return parseExp(exp.argument) + exp.operator;},
     'LogicalExpression': (exp)=> {return (complexTypes.includes(exp.left.type)?('('+parseExp(exp.left)+')'):parseExp(exp.left))
         + ' ' +exp.operator + ' '
-        + (complexTypes.includes(exp.right.type)?('('+parseExp(exp.right)+')'):parseExp(exp.right));}
+        + (complexTypes.includes(exp.right.type)?('('+parseExp(exp.right)+')'):parseExp(exp.right));}*/
 };
 
-const complexTypes = ['BinaryExpression','UnaryExpression','LogicalExpression'];
+/*const complexTypes = ['BinaryExpression','UnaryExpression','LogicalExpression'];*/
 
-const parseFuncDec = (item) => {
-    let list = [];
-    list.push({Line: item.id.loc.start.line, Type: 'function declaration',Name: item.id.name, Condition: ' ',Value: ' '});
-    list = Array.from(item.params).reduce((acc,curr)=>acc.concat(parseParam(curr)),list);
-    list = list.concat(parseItem(item.body));
-    return list;
+const handleFunction = (item,env) => {
+    Array.from(item.body).concat(Array.from(item.body.body).reduce((acc,curr) => {
+        if(curr.type === 'VariableDeclaration') {
+            env = env.concat(handleVarDec(curr, env));
+            return acc;
+        }
+        else if(curr.type === 'ExpressionStatement' && curr.expression.type === 'AssignmentExpression'){
+            curr.expression.right= subLeft(curr.expression.right,env);
+            //env = Array.from(env).map((ass) => {if(ass.Key === curr.expression.left.name) ass.Value = curr.expression.right; return ass;});
+            return acc.concat(curr);
+        }
+        /*else if(curr.type === 'AssignmentExpression'){
+            env = env.concat(handleAssStmt(curr, env));
+            curr.right= subLeft(curr.right,env);
+            return acc.concat(curr);
+        }*/
+        else return acc.concat(handleItem(curr,env));},[]));
+    item.body.body = item.body.body.filter((item) => filterLines(item));
+    return item;
 };
 
-const parseVarDec = (item) => {
-    return Array.from(item.declarations).reduce((acc,curr)=>
-        acc.concat([{Line: curr.id.loc.start.line, Type: 'variable declaration',Name: curr.id.name, Condition: ' ',Value: curr.init==null?'NULL':parseExp(curr.init)}]) ,[]);
+const handleVarDec = (item,env) => {
+    item.declarations[0].init = subLeft(item.declarations[0].init,env);
+    return [{Key: item.declarations[0].id.name , Value: item.declarations[0].init}];
 };
 
-const parseParam = (param) => {
-    return [{Line: param.loc.start.line, Type: 'variable declaration',Name: param.name, Condition: ' ',Value: ' '}];
+const subInputVector = (line,input) => {
+    let parsedLine = esprima.parseScript(line);
+    changeToinput(parsedLine.body[0].expression,input);
+    return eval(escodegen.generate(parsedLine));
 };
-export {parseCode};
+
+const changeToinput = (item,input) => {
+    return changeToinputMap[item.type](item,input);
+};
+
+const changeToinputMap = {
+    'Literal': (exp) => {
+        return exp;
+    },
+    'BinaryExpression': (exp, input) => {
+        exp.left = changeToinput(exp.left, input);
+        exp.right = changeToinput(exp.right, input);
+        return exp;
+    },
+    'Identifier': (exp, input) => {
+        return esprima.parseScript(input[exp.name].toString()).body[0].expression;
+    },
+    'UnaryExpression': (exp, input) => {
+        exp.argument = changeToinput(exp.argument, input);
+        return exp;
+    },
+    /*'MemberExpression': (exp, input) => {
+        exp.object = changeToinput(exp.object, input);
+        exp.property = changeToinput(exp.property,input);
+        return exp;
+    },*/
+};
+
+const filterLines = (item) => {
+    if(item.kind != null && item.kind === 'let')
+        return false;
+    else if(item.type === 'ExpressionStatement' && item.expression.type === 'AssignmentExpression'){
+        return findParam(item);
+    }
+    return true;
+};
+
+const findParam = (item) => {
+    for(let i = 0; i < params.length; i++){
+        if(params[i].name === item.expression.left.name)
+            return true;
+    }
+    return false;
+};
+
+export {parseCode,subInputVector};

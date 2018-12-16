@@ -1,189 +1,127 @@
 import assert from 'assert';
-import {parseCode} from '../src/js/code-analyzer';
+import {parseCode, subInputVector} from '../src/js/code-analyzer';
 
 describe('The javascript parser', () => {
     
-    it('test1', () => {assert.equal(JSON.stringify(parseCode('let a = 1;')),
-        '[{"Line":1,"Type":"variable declaration","Name":"a","Condition":" ","Value":"1"}]');
-    });
-	
-    it('test2', () => {
-        assert.equal(JSON.stringify(parseCode('function binarySearch(X, V, n){ ' + '\nlet low, high, mid;' + '\n  low = 0;' + '\n high = n - 1;' + '\n while (low <= high) {' + '\n   mid = (low + high)/2;' + '\n   if (X < V[mid])' + '\n      high = mid - 1;' + '\n  else if (X > V[mid])' + '\n      low = mid + 1;' + '\n   else' + '\n    return mid;' + '\n }' + '\nreturn -1;' + '\n }')),
-            JSON.stringify([{'Line': 1, 'Type': 'function declaration', 'Name': 'binarySearch', 'Condition': ' ', 'Value': ' '}, {'Line': 1, 'Type': 'variable declaration', 'Name': 'X', 'Condition': ' ', 'Value': ' '}, {'Line': 1, 'Type': 'variable declaration', 'Name': 'V', 'Condition': ' ', 'Value': ' '}, {'Line': 1, 'Type': 'variable declaration', 'Name': 'n', 'Condition': ' ', 'Value': ' '}, {'Line': 2, 'Type': 'variable declaration', 'Name': 'low', 'Condition': ' ', 'Value': 'NULL'}, {'Line': 2, 'Type': 'variable declaration', 'Name': 'high', 'Condition': ' ', 'Value': 'NULL'}, {'Line': 2, 'Type': 'variable declaration', 'Name': 'mid', 'Condition': ' ', 'Value': 'NULL'}, {'Line': 3, 'Type': 'assignment expression', 'Name': 'low', 'Condition': ' ', 'Value': '0'}, {'Line': 4, 'Type': 'assignment expression', 'Name': 'high', 'Condition': ' ', 'Value': 'n - 1'}, {'Line': 5, 'Type': 'while statement', 'Name': '', 'Condition': 'low <= high', 'Value': ''}, {'Line': 6, 'Type': 'assignment expression', 'Name': 'mid', 'Condition': ' ', 'Value': '(low + high) / 2'}, {'Line': 7, 'Type': 'if statement', 'Name': '', 'Condition': 'X < V[mid]', 'Value': ''}, {'Line': 8, 'Type': 'assignment expression', 'Name': 'high', 'Condition': ' ', 'Value': 'mid - 1'}, {'Line': 9, 'Type': 'else if statement', 'Name': '', 'Condition': 'X > V[mid]', 'Value': ''}, {'Line': 10, 'Type': 'assignment expression', 'Name': 'low', 'Condition': ' ', 'Value': 'mid + 1'}, {'Line': 12, 'Type': 'return statement', 'Name': '', 'Condition': '', 'Value': 'mid'}, {'Line': 14, 'Type': 'return statement', 'Name': '', 'Condition': '', 'Value': '-1'}]));
-    });
-
-    it('test3', () => {assert.equal(JSON.stringify(parseCode('for(i=0;i<5 && i<10;i++){ '+'\n ++x;' +'\n}')),
-        JSON.stringify([{'Line': 1, 'Type': 'for statement', 'Name': '', 'Condition': '(i < 5) && (i < 10)', 'Value': ''}, {'Line': 1, 'Type': 'assignment expression', 'Name': 'i', 'Condition': ' ', 'Value': '0'}, {'Line': 1, 'Type': 'assignment statement', 'Name': 'i', 'Condition': '', 'Value': 'i++'}, {'Line': 2, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': '++x'}]));
-    });
-
-    it('test4', () => {assert.equal(JSON.stringify(parseCode('if(x<5)' +'\nx++;' +'\nelse' +'\n x--;')),
-        JSON.stringify([{'Line': 1, 'Type': 'if statement', 'Name': '', 'Condition': 'x < 5', 'Value': ''}, {'Line': 2, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': 'x++'}, {'Line': 4, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': 'x--'}]));
-    });
-
-    it('test5', () => {assert.equal(JSON.stringify(parseCode('if(x<4)' +'\nx++;' +'\nelse if(x<3)' +'\n x--;')),
-        JSON.stringify([{'Line': 1, 'Type': 'if statement', 'Name': '', 'Condition': 'x < 4', 'Value': ''},
-            {
-                'Line': 2,
-                'Type': 'assignment statement',
-                'Name': 'x',
-                'Condition': '',
-                'Value': 'x++'
-            },
-            {
-                'Line': 3,
-                'Type': 'else if statement',
-                'Name': '',
-                'Condition': 'x < 3',
-                'Value': ''
-            },
-            {
-                'Line': 4,
-                'Type': 'assignment statement',
-                'Name': 'x',
-                'Condition': '',
-                'Value': 'x--'
-            }
-        ]));
+    it('test1', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '    let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        '    \n' +
+        '    if (b < z) {\n' +
+        '        c = c + 5;\n' +
+        '        return x + y + z + c;\n' +
+        '    } else if (b < z * 2) {\n' +
+        '        c = c + x + 5;\n' +
+        '        return x + y + z + c;\n' +
+        '    } else {\n' +
+        '        c = c + z + 5;\n' +
+        '        return x + y + z + c;\n' +
+        '    }\n' +
+        '}\n')), '["function foo(x, y, z) {","    if (x + 1 + y < z) {","        return x + y + z + (0 + 5);","    } else if (x + 1 + y < z * 2) {","        return x + y + z + (0 + x + 5);","    } else {","        return x + y + z + (0 + z + 5);","    }","}"]');
     });
 
-    it('test6', () => {assert.equal(JSON.stringify(parseCode('if(x<4)'+'\nx++;' +'\nelse if(x<3)' +'\nx--;' +'\nelse' +'\nx++;')),
-        JSON.stringify([{'Line': 1, 'Type': 'if statement', 'Name': '', 'Condition': 'x < 4', 'Value': ''}, {'Line': 2, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': 'x++'}, {'Line': 3, 'Type': 'else if statement', 'Name': '', 'Condition': 'x < 3', 'Value': ''}, {'Line': 4, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': 'x--'}, {'Line': 6, 'Type': 'assignment statement', 'Name': 'x', 'Condition': '', 'Value': 'x++'}]));});
-
-    it('test7', () => {assert.equal(JSON.stringify(parseCode('function temp(){'+'\nreturn -(-1);}')),
-        JSON.stringify([
-            {
-                'Line': 1,
-                'Type': 'function declaration',
-                'Name': 'temp',
-                'Condition': ' ',
-                'Value': ' '
-            },
-            {
-                'Line': 2,
-                'Type': 'return statement',
-                'Name': '',
-                'Condition': '',
-                'Value': '-(-1)'
-            }
-        ]));
+    it('test2', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '    let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        '    \n' +
+        '    while (a < z) {\n' +
+        '        c = a + b;\n' +
+        '        z = c * 2;\n' +
+        '    }\n' +
+        '    \n' +
+        '    return z;\n' +
+        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
     });
 
-    it('test8', () => {assert.equal(JSON.stringify(parseCode('if(x<4)\n' + 'x++;\n' + 'else if(x<3)\n' + 'x--;\n' + 'else if(x>90)\n' + 'x++;')),
-        JSON.stringify([
-            {
-                'Line': 1,
-                'Type': 'if statement',
-                'Name': '',
-                'Condition': 'x < 4',
-                'Value': ''
-            },
-            {
-                'Line': 2,
-                'Type': 'assignment statement',
-                'Name': 'x',
-                'Condition': '',
-                'Value': 'x++'
-            },
-            {
-                'Line': 3,
-                'Type': 'else if statement',
-                'Name': '',
-                'Condition': 'x < 3',
-                'Value': ''
-            },
-            {
-                'Line': 4,
-                'Type': 'assignment statement',
-                'Name': 'x',
-                'Condition': '',
-                'Value': 'x--'
-            },
-            {
-                'Line': 5,
-                'Type': 'else if statement',
-                'Name': '',
-                'Condition': 'x > 90',
-                'Value': ''
-            },
-            {
-                'Line': 6,
-                'Type': 'assignment statement',
-                'Name': 'x',
-                'Condition': '',
-                'Value': 'x++'
-            }
-        ]));
+
+    it('test3', () => {assert.equal(JSON.stringify(parseCode('  let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        'function foo(x, y, z){\n' +
+        '    while (a < z) {\n' +
+        '        c = a + b;\n' +
+        '        z = c * 2;\n' +
+        '    }\n' +
+        '    \n' +
+        '    return z;\n' +
+        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
     });
 
-    it('test9', () => {assert.equal(JSON.stringify(parseCode('if(x<5)\n' +
-        'x=2/(x+y);')), JSON.stringify([
-        {
-            'Line': 1,
-            'Type': 'if statement',
-            'Name': '',
-            'Condition': 'x < 5',
-            'Value': ''
-        },
-        {
-            'Line': 2,
-            'Type': 'assignment expression',
-            'Name': 'x',
-            'Condition': ' ',
-            'Value': '2 / (x + y)'
-        }
-    ]));
+    it('test4', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '    let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        '    \n' +
+        '    for (i=0; i < 5; i++) {\n' +
+        '        c = a + b;\n' +
+        '        z = c * 2;\n' +
+        '    }\n' +
+        '    \n' +
+        '    return z;\n' +
+        '}\n')), '["function foo(x, y, z) {","    for (i = 0; i < 5; i++) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
     });
 
-    it('test10', () => {assert.equal(JSON.stringify(parseCode('if(x && y)'
-        +'\nx=y++;')), JSON.stringify([
-        {
-            'Line': 1,
-            'Type': 'if statement',
-            'Name': '',
-            'Condition': 'x && y',
-            'Value': ''
-        },
-        {
-            'Line': 2,
-            'Type': 'assignment expression',
-            'Name': 'x',
-            'Condition': ' ',
-            'Value': 'y++'
-        }
-    ]));
+    it('test5', () => {assert.equal(JSON.stringify(parseCode('function foo(v){\n' +
+        'if(v>5)\n' +
+        'v=5;\n' +
+        'else\n' +
+        'v=8;\n' +
+        'for(i=0;i<7;i++)\n' +
+        'v = i;\n' +
+        'while(v===0)\n' +
+        'v=5;\n' +
+        '}')), '["function foo(v) {","    if (v > 5)","        v = 5;","    else","        v = 8;","    for (i = 0; i < 7; i++)","        v = i;","    while (v === 0)","        v = 5;","}"]');
     });
 
-    it('test11', () => {assert.equal(JSON.stringify(parseCode('for(i=0;i<5;i=i++){\n' + 'x++;\n' + '}')), JSON.stringify([
-        {
-            'Line': 1,
-            'Type': 'for statement',
-            'Name': '',
-            'Condition': 'i < 5',
-            'Value': ''
-        },
-        {
-            'Line': 1,
-            'Type': 'assignment expression',
-            'Name': 'i',
-            'Condition': ' ',
-            'Value': '0'
-        },
-        {
-            'Line': 1,
-            'Type': 'assignment expression',
-            'Name': 'i',
-            'Condition': ' ',
-            'Value': 'i++'
-        },
-        {
-            'Line': 2,
-            'Type': 'assignment statement',
-            'Name': 'x',
-            'Condition': '',
-            'Value': 'x++'
-        }
-    ]));
+    it('test6', () => {assert.equal(subInputVector('(x + 5 > -7)',JSON.parse('{"x":5}')), true);
     });
 
+
+
+    it('test7', () => {assert.equal(JSON.stringify(parseCode('function foo (v){\n' +
+        'if(v === 6){\n' +
+        'let c = 6;\n' +
+        'v=c;\n' +
+        '}\n' +
+        'else{\n' +
+        'let c=7;\n' +
+        'v=c;\n' +
+        '}\n' +
+        '}')), '["function foo(v) {","    if (v === 6) {","        v = c;","    } else {","        v = c;","    }","}"]');
+    });
+
+    it('test8', () => {assert.equal(JSON.stringify(parseCode('function doo (v){\n' +
+        'if(v===6)\n' +
+        'v = v+6;\n' +
+        '}')), '["function doo(v) {","    if (v === 6)","        v = v + 6;","}"]');
+    });
+
+    it('test9', () => {assert.equal(JSON.stringify(parseCode('function foo (x){\n' +
+        'let c = 5;\n' +
+        'for(i=0;i<5;i++){\n' +
+        'x = c;\n' +
+        'x = 2* x;\n' +
+        '}\n' +
+        '}')), '["function foo(x) {","    for (i = 0; i < 5; i++) {","        x = 5;","        x = 2 * x;","    }","}"]');
+    });
+
+    it('test10', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '    let a = x + 1;\n' +
+        '    let b = a + y;\n' +
+        '    let c = 0;\n' +
+        '    \n' +
+        '    while (a < -z) {\n' +
+        '        c = a + b;\n' +
+        '        z = c * 2;\n' +
+        '    }\n' +
+        '    z = 5;\n' +
+        '    return z;\n' +
+        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < -z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    z = 5;","    return z;","}"]');
+    });
+
+    /*it('test5', () => {assert.equal(JSON.stringify(parseCode('')), '');
+    });*/
 
 });
