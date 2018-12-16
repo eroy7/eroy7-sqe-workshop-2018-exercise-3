@@ -7,7 +7,7 @@ $(document).ready(function () {
         let inputVecor = $('#inputVector').val()===''?null:JSON.parse($('#inputVector').val());
         let parsedCode = parseCode(codeToParse);
         //('#codePlaceholder').val(JSON.stringify(parsedCode));
-        //$('#linesToPrint').val(JSON.stringify(parsedCode, null, 2));
+        
         $('#linesToPrint').empty();
         parsedCode.forEach((line)=>{
             if(inputVecor != null && line.includes('if')) {
