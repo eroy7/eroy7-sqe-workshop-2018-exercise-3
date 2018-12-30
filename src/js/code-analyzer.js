@@ -1,24 +1,16 @@
- import * as esprima from 'esprima';
+import * as esprima from 'esprima';
 import * as escodegen from 'escodegen';
 
-let params = [];
+
 
 const parseCode = (codeToParse) => {
-    params = [];
-    let parsedCode = esprima.parseScript(codeToParse);
-    let functionToSub = [];
+    let parsedCode = esprima.parseScript(codeToParse,{range: true});
+    //return parsedCode
     let env = [];
-    //parsedList = Array.from(parsedCode.body).reduce((acc,curr)=>acc.concat(parseItem(curr)),parsedList);
-    parsedCode.body.map((item) => {
-        if(item.type === 'FunctionDeclaration')
-            functionToSub = item;
-        else /*if(item.type === 'VariableDeclaration')*/
-            env = env.concat(handleVarDec(item,env));
-    });
-    parsedCode.body = [];
-    params = functionToSub.params;
-    parsedCode.body[0] = handleFunction(functionToSub,env);
-    return escodegen.generate(parsedCode).split('\n');
+    //parsedCode.body = [];
+    return handleFunction(parsedCode.body[0],env);
+    //parsedCode.body[0].body = parsedFunction.body;
+    //return escodegen.generate(parsedCode);
 };
 
 //code
@@ -33,6 +25,7 @@ const handleItemMap = {/*'FunctionDeclaration': (item)=> {return parseFuncDec(it
     'ForStatement': (item,env)=> {return handleFor(item,env);},
     //'AssignmentExpression': (item,env)=> {item.right = subLeft(item.right,env); return item;},
     'UpdateExpression': (item)=>{return item;},
+    'ExpressionStatement': (item)=>{return item;}
 };
 
 const handleItem = (item,env) => {
@@ -45,7 +38,7 @@ const handleFor = (item,env) => {
     item.update = handleItem(item.update,env);
     if(item.body.type === 'BlockStatement') {
         item.body.body = Array.from(item.body.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
-        item.body.body = item.body.body.filter((item) => filterLines(item));
+        //item.body.body = item.body.body.filter((item) => filterLines(item));
     }
     else /*if(item.body.type === 'ExpressionStatement' && item.body.expression.type === 'AssignmentExpression')*/{
         item.body.expression.right= subLeft(item.body.expression.right,env);
@@ -70,7 +63,7 @@ const handleIf = (item,env) => {
 const handleConsequent = (item,env) => {
     if(item.consequent.type === 'BlockStatement') {
         item.consequent.body = Array.from(item.consequent.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
-        item.consequent.body = item.consequent.body.filter((item) => filterLines(item));
+        //item.consequent.body = item.consequent.body.filter((item) => filterLines(item));
     }
     else /*if(item.consequent.type === 'ExpressionStatement' && item.consequent.expression.type === 'AssignmentExpression')*/{
         item.consequent.expression.right= subLeft(item.consequent.expression.right,env);
@@ -85,7 +78,7 @@ const handleConsequent = (item,env) => {
 const handleAlternate = (item, defEnv) => {
     if(item.alternate.type === 'BlockStatement') {
         item.alternate.body = Array.from(item.alternate.body).reduce((acc, curr) => {return handleBody(acc, curr, defEnv);}, []);
-        item.alternate.body = item.alternate.body.filter((item) => filterLines(item));
+        //item.alternate.body = item.alternate.body.filter((item) => filterLines(item));
     }
     else if(item.alternate.type === 'ExpressionStatement' && item.alternate.expression.type === 'AssignmentExpression'){
         item.alternate.expression.right= subLeft(item.alternate.expression.right,defEnv);
@@ -123,7 +116,7 @@ const handleWhile = (item,env) => {
     item.test = subLeft(item.test, env);
     if(item.body.type === 'BlockStatement') {
         item.body.body = Array.from(item.body.body).reduce((acc, curr) => {return handleBody(acc, curr, env);}, []);
-        item.body.body = item.body.body.filter((item) => filterLines(item));
+        //item.body.body = item.body.body.filter((item) => filterLines(item));
     }
     else /*if(item.body.type === 'ExpressionStatement' && item.body.expression.type === 'AssignmentExpression')*/{
         item.body.expression.right= subLeft(item.body.expression.right,env);
@@ -151,10 +144,8 @@ const subLeftMap = {'Literal': (exp/*,env*/)=> {/*env.map((ass) => {if(ass.Key =
     'Identifier': (exp,env)=> {Array.from(env).map((ass) => {if(ass.Key === exp.name)exp=ass.Value;}); return exp;},
     'UnaryExpression': (exp,env)=> {exp.argument = subLeft(exp.argument,env); return exp;},
     //'MemberExpression': (exp,env)=> {exp.object = subLeft(exp.object,env); exp.property = subLeft(exp.property,env); return exp;},
-    /*'UpdateExpression': (exp)=> {return parseExp(exp.argument) + exp.operator;},
-    'LogicalExpression': (exp)=> {return (complexTypes.includes(exp.left.type)?('('+parseExp(exp.left)+')'):parseExp(exp.left))
-        + ' ' +exp.operator + ' '
-        + (complexTypes.includes(exp.right.type)?('('+parseExp(exp.right)+')'):parseExp(exp.right));}*/
+    /*'UpdateExpression': (exp)=> {return parseExp(exp.argument) + exp.operator;},*/
+    'LogicalExpression': (exp,env)=> {exp.left = subLeft(exp.left,env);exp.right = subLeft(exp.right,env);return exp;}
 };
 
 /*const complexTypes = ['BinaryExpression','UnaryExpression','LogicalExpression'];*/
@@ -176,7 +167,7 @@ const handleFunction = (item,env) => {
             return acc.concat(curr);
         }*/
         else return acc.concat(handleItem(curr,env));},[]));
-    item.body.body = item.body.body.filter((item) => filterLines(item));
+    //item.body.body = item.body.body.filter((item) => filterLines(item));
     return item;
 };
 
@@ -218,21 +209,5 @@ const changeToinputMap = {
     },*/
 };
 
-const filterLines = (item) => {
-    if(item.kind != null && item.kind === 'let')
-        return false;
-    else if(item.type === 'ExpressionStatement' && item.expression.type === 'AssignmentExpression'){
-        return findParam(item);
-    }
-    return true;
-};
-
-const findParam = (item) => {
-    for(let i = 0; i < params.length; i++){
-        if(params[i].name === item.expression.left.name)
-            return true;
-    }
-    return false;
-};
 
 export {parseCode,subInputVector};

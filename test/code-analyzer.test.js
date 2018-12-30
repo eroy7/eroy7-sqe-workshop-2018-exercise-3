@@ -2,23 +2,8 @@ import assert from 'assert';
 import {parseCode, subInputVector} from '../src/js/code-analyzer';
 
 describe('The javascript parser', () => {
-    
-    it('test1', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
-        '    let a = x + 1;\n' +
-        '    let b = a + y;\n' +
-        '    let c = 0;\n' +
-        '    \n' +
-        '    if (b < z) {\n' +
-        '        c = c + 5;\n' +
-        '        return x + y + z + c;\n' +
-        '    } else if (b < z * 2) {\n' +
-        '        c = c + x + 5;\n' +
-        '        return x + y + z + c;\n' +
-        '    } else {\n' +
-        '        c = c + z + 5;\n' +
-        '        return x + y + z + c;\n' +
-        '    }\n' +
-        '}\n')), '["function foo(x, y, z) {","    if (x + 1 + y < z) {","        return x + y + z + (0 + 5);","    } else if (x + 1 + y < z * 2) {","        return x + y + z + (0 + x + 5);","    } else {","        return x + y + z + (0 + z + 5);","    }","}"]');
+
+    it('test1', () => {assert.equal(subInputVector('(x + 5 > -7)',JSON.parse('{"x":5}')), true);
     });
 
     it('test2', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
@@ -26,100 +11,158 @@ describe('The javascript parser', () => {
         '    let b = a + y;\n' +
         '    let c = 0;\n' +
         '    \n' +
-        '    while (a < z) {\n' +
-        '        c = a + b;\n' +
-        '        z = c * 2;\n' +
+        '    if (b < z) {\n' +
+        '        c = c + 5;\n' +
+        '    } else if (b < z * 2) {\n' +
+        '        c = c + x + 5;\n' +
+        '    } else {\n' +
+        '        c = c + z + 5;\n' +
         '    }\n' +
         '    \n' +
-        '    return z;\n' +
-        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
+        '    return c;\n' +
+        '}\n')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[31,32]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[35,36]},"right":{"type":"Literal","value":1,"raw":"1","range":[39,40]},"range":[35,40]},"range":[31,40]}],"kind":"let","range":[27,41]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[50,51]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[35,36]},"right":{"type":"Literal","value":1,"raw":"1","range":[39,40]},"range":[35,40]},"right":{"type":"Identifier","name":"y","range":[58,59]},"range":[54,59]},"range":[50,59]}],"kind":"let","range":[46,60]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[69,70]},"init":{"type":"Literal","value":0,"raw":"0","range":[73,74]},"range":[69,74]}],"kind":"let","range":[65,75]},{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[35,36]},"right":{"type":"Literal","value":1,"raw":"1","range":[39,40]},"range":[35,40]},"right":{"type":"Identifier","name":"y","range":[58,59]},"range":[54,59]},"right":{"type":"Identifier","name":"z","range":[93,94]},"range":[89,94]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[106,107]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[73,74]},"right":{"type":"Literal","value":5,"raw":"5","range":[114,115]},"range":[110,115]},"range":[106,115]},"range":[106,116]}],"range":[96,122]},"alternate":{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[35,36]},"right":{"type":"Literal","value":1,"raw":"1","range":[39,40]},"range":[35,40]},"right":{"type":"Identifier","name":"y","range":[58,59]},"range":[54,59]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"z","range":[136,137]},"right":{"type":"Literal","value":2,"raw":"2","range":[140,141]},"range":[136,141]},"range":[132,141]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[153,154]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[73,74]},"right":{"type":"Identifier","name":"x","range":[161,162]},"range":[157,162]},"right":{"type":"Literal","value":5,"raw":"5","range":[165,166]},"range":[157,166]},"range":[153,166]},"range":[153,167]}],"range":[143,173]},"alternate":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[189,190]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[73,74]},"right":{"type":"Identifier","name":"z","range":[197,198]},"range":[193,198]},"right":{"type":"Literal","value":5,"raw":"5","range":[201,202]},"range":[193,202]},"range":[189,202]},"range":[189,203]}],"range":[179,209]},"range":[128,209]},"range":[85,209]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[73,74]},"right":{"type":"Literal","value":5,"raw":"5","range":[114,115]},"range":[110,115]},"range":[219,228]}],"range":[21,230]},"generator":false,"expression":false,"async":false,"range":[0,230]}');
     });
 
-
-    it('test3', () => {assert.equal(JSON.stringify(parseCode('  let a = x + 1;\n' +
-        '    let b = a + y;\n' +
-        '    let c = 0;\n' +
-        'function foo(x, y, z){\n' +
-        '    while (a < z) {\n' +
-        '        c = a + b;\n' +
-        '        z = c * 2;\n' +
-        '    }\n' +
-        '    \n' +
-        '    return z;\n' +
-        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
+    it('test3', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '   let a = x + 1;\n' +
+        '   let b = a + y;\n' +
+        '   let c = 0;\n' +
+        '   \n' +
+        '   while (a < z) {\n' +
+        '       c = a + b;\n' +
+        '       z = c * 2;\n' +
+        '       a++;\n' +
+        '   }\n' +
+        '   \n' +
+        '   return z;\n' +
+        '}\n')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[30,31]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"range":[30,39]}],"kind":"let","range":[26,40]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[48,49]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"Identifier","name":"y","range":[56,57]},"range":[52,57]},"range":[48,57]}],"kind":"let","range":[44,58]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[66,67]},"init":{"type":"Literal","value":0,"raw":"0","range":[70,71]},"range":[66,71]}],"kind":"let","range":[62,72]},{"type":"WhileStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"Identifier","name":"z","range":[91,92]},"range":[87,92]},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[103,104]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"Identifier","name":"y","range":[56,57]},"range":[52,57]},"range":[107,112]},"range":[103,112]},"range":[103,113]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"z","range":[121,122]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[34,35]},"right":{"type":"Literal","value":1,"raw":"1","range":[38,39]},"range":[34,39]},"right":{"type":"Identifier","name":"y","range":[56,57]},"range":[52,57]},"range":[107,112]},"right":{"type":"Literal","value":2,"raw":"2","range":[129,130]},"range":[125,130]},"range":[121,130]},"range":[121,131]},{"type":"ExpressionStatement","expression":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"a","range":[139,140]},"prefix":false,"range":[139,142]},"range":[139,143]}],"range":[94,148]},"range":[80,148]},{"type":"ReturnStatement","argument":{"type":"Identifier","name":"z","range":[163,164]},"range":[156,165]}],"range":[21,167]},"generator":false,"expression":false,"async":false,"range":[0,167]}');
     });
 
     it('test4', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
-        '    let a = x + 1;\n' +
-        '    let b = a + y;\n' +
-        '    let c = 0;\n' +
-        '    \n' +
-        '    for (i=0; i < 5; i++) {\n' +
-        '        c = a + b;\n' +
-        '        z = c * 2;\n' +
-        '    }\n' +
-        '    \n' +
-        '    return z;\n' +
-        '}\n')), '["function foo(x, y, z) {","    for (i = 0; i < 5; i++) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    return z;","}"]');
+        '            let a = x + 1;\n' +
+        '            let b = a + y;\n' +
+        '            let c = 0;\n' +
+        '            \n' +
+        '            for (i=0; i < 5; i++) {\n' +
+        '                c = a + b;\n' +
+        '                z = c * 2;\n' +
+        '            }\n' +
+        '            \n' +
+        '            return z;\n' +
+        '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[39,40]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"range":[39,48]}],"kind":"let","range":[35,49]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[66,67]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[66,75]}],"kind":"let","range":[62,76]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[93,94]},"init":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"range":[93,98]}],"kind":"let","range":[89,99]},{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i","range":[130,131]},"right":{"type":"Literal","value":0,"raw":"0","range":[132,133]},"range":[130,133]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i","range":[135,136]},"right":{"type":"Literal","value":5,"raw":"5","range":[139,140]},"range":[135,140]},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i","range":[142,143]},"prefix":false,"range":[142,145]},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[165,166]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[169,174]},"range":[165,174]},"range":[165,175]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"z","range":[192,193]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[169,174]},"right":{"type":"Literal","value":2,"raw":"2","range":[200,201]},"range":[196,201]},"range":[192,201]},"range":[192,202]}],"range":[147,216]},"range":[125,216]},{"type":"ReturnStatement","argument":{"type":"Identifier","name":"z","range":[249,250]},"range":[242,251]}],"range":[21,261]},"generator":false,"expression":false,"async":false,"range":[0,261]}');
     });
 
     it('test5', () => {assert.equal(JSON.stringify(parseCode('function foo(v){\n' +
-        'if(v>5)\n' +
-        'v=5;\n' +
-        'else\n' +
-        'v=8;\n' +
-        'for(i=0;i<7;i++)\n' +
-        'v = i;\n' +
-        'while(v===0)\n' +
-        'v=5;\n' +
-        '}')), '["function foo(v) {","    if (v > 5)","        v = 5;","    else","        v = 8;","    for (i = 0; i < 7; i++)","        v = i;","    while (v === 0)","        v = 5;","}"]');
-    });
-
-    it('test6', () => {assert.equal(subInputVector('(x + 5 > -7)',JSON.parse('{"x":5}')), true);
+        '        if(v>5)\n' +
+        '        v=5;\n' +
+        '        else\n' +
+        '        v=8;\n' +
+        '        for(i=0;i<7;i++)\n' +
+        '        v = i;\n' +
+        '        while(v===0)\n' +
+        '        v=5;\n' +
+        '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"v","range":[13,14]}],"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":">","left":{"type":"Identifier","name":"v","range":[28,29]},"right":{"type":"Literal","value":5,"raw":"5","range":[30,31]},"range":[28,31]},"consequent":{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[41,42]},"right":{"type":"Literal","value":5,"raw":"5","range":[43,44]},"range":[41,44]},"range":[41,45]},"alternate":{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[67,68]},"right":{"type":"Literal","value":8,"raw":"8","range":[69,70]},"range":[67,70]},"range":[67,71]},"range":[25,71]},{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i","range":[84,85]},"right":{"type":"Literal","value":0,"raw":"0","range":[86,87]},"range":[84,87]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i","range":[88,89]},"right":{"type":"Literal","value":7,"raw":"7","range":[90,91]},"range":[88,91]},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i","range":[92,93]},"prefix":false,"range":[92,95]},"body":{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[105,106]},"right":{"type":"Identifier","name":"i","range":[109,110]},"range":[105,110]},"range":[105,111]},"range":[80,111]},{"type":"WhileStatement","test":{"type":"BinaryExpression","operator":"===","left":{"type":"Identifier","name":"v","range":[126,127]},"right":{"type":"Literal","value":0,"raw":"0","range":[130,131]},"range":[126,131]},"body":{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[141,142]},"right":{"type":"Literal","value":5,"raw":"5","range":[143,144]},"range":[141,144]},"range":[141,145]},"range":[120,145]}],"range":[15,155]},"generator":false,"expression":false,"async":false,"range":[0,155]}');
     });
 
 
-
-    it('test7', () => {assert.equal(JSON.stringify(parseCode('function foo (v){\n' +
-        'if(v === 6){\n' +
-        'let c = 6;\n' +
-        'v=c;\n' +
-        '}\n' +
-        'else{\n' +
-        'let c=7;\n' +
-        'v=c;\n' +
-        '}\n' +
-        '}')), '["function foo(v) {","    if (v === 6) {","        v = c;","    } else {","        v = c;","    }","}"]');
+     it('test6', () => {assert.equal(JSON.stringify(parseCode('function foo (v){\n' +
+         '        if(v === 6){\n' +
+         '        let c = 6;\n' +
+         '        v=c;\n' +
+         '        }\n' +
+         '        else{\n' +
+         '        let c=7;\n' +
+         '        v=c;\n' +
+         '        }\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"v","range":[14,15]}],"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"===","left":{"type":"Identifier","name":"v","range":[29,30]},"right":{"type":"Literal","value":6,"raw":"6","range":[35,36]},"range":[29,36]},"consequent":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[51,52]},"init":{"type":"Literal","value":6,"raw":"6","range":[55,56]},"range":[51,56]}],"kind":"let","range":[47,57]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[66,67]},"right":{"type":"Identifier","name":"c","range":[68,69]},"range":[66,69]},"range":[66,70]}],"range":[37,80]},"alternate":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[107,108]},"init":{"type":"Literal","value":7,"raw":"7","range":[109,110]},"range":[107,110]}],"kind":"let","range":[103,111]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[120,121]},"right":{"type":"Identifier","name":"c","range":[122,123]},"range":[120,123]},"range":[120,124]}],"range":[93,134]},"range":[26,134]}],"range":[16,144]},"generator":false,"expression":false,"async":false,"range":[0,144]}');
     });
 
-    it('test8', () => {assert.equal(JSON.stringify(parseCode('function doo (v){\n' +
-        'if(v===6)\n' +
-        'v = v+6;\n' +
-        '}')), '["function doo(v) {","    if (v === 6)","        v = v + 6;","}"]');
+
+     it('test7', () => {assert.equal(JSON.stringify(parseCode('function doo (v){\n' +
+         '        if(v===6)\n' +
+         '        v = v+6;\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"doo","range":[9,12]},"params":[{"type":"Identifier","name":"v","range":[14,15]}],"body":{"type":"BlockStatement","body":[{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"===","left":{"type":"Identifier","name":"v","range":[29,30]},"right":{"type":"Literal","value":6,"raw":"6","range":[33,34]},"range":[29,34]},"consequent":{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"v","range":[44,45]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"v","range":[48,49]},"right":{"type":"Literal","value":6,"raw":"6","range":[50,51]},"range":[48,51]},"range":[44,51]},"range":[44,52]},"alternate":null,"range":[26,52]}],"range":[16,62]},"generator":false,"expression":false,"async":false,"range":[0,62]}');
     });
 
-    it('test9', () => {assert.equal(JSON.stringify(parseCode('function foo (x){\n' +
-        'let c = 5;\n' +
-        'for(i=0;i<5;i++){\n' +
-        'x = c;\n' +
-        'x = 2* x;\n' +
-        '}\n' +
-        '}')), '["function foo(x) {","    for (i = 0; i < 5; i++) {","        x = 5;","        x = 2 * x;","    }","}"]');
+
+     it('test8', () => {assert.equal(JSON.stringify(parseCode('function foo (x){\n' +
+         '        let c = 5;\n' +
+         '        for(i=0;i<5;i++){\n' +
+         '        x = c;\n' +
+         '        x = 2* x;\n' +
+         '        }\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[14,15]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[30,31]},"init":{"type":"Literal","value":5,"raw":"5","range":[34,35]},"range":[30,35]}],"kind":"let","range":[26,36]},{"type":"ForStatement","init":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"i","range":[49,50]},"right":{"type":"Literal","value":0,"raw":"0","range":[51,52]},"range":[49,52]},"test":{"type":"BinaryExpression","operator":"<","left":{"type":"Identifier","name":"i","range":[53,54]},"right":{"type":"Literal","value":5,"raw":"5","range":[55,56]},"range":[53,56]},"update":{"type":"UpdateExpression","operator":"++","argument":{"type":"Identifier","name":"i","range":[57,58]},"prefix":false,"range":[57,60]},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"x","range":[71,72]},"right":{"type":"Literal","value":5,"raw":"5","range":[34,35]},"range":[71,76]},"range":[71,77]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"x","range":[86,87]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"Literal","value":2,"raw":"2","range":[90,91]},"right":{"type":"Identifier","name":"x","range":[93,94]},"range":[90,94]},"range":[86,94]},"range":[86,95]}],"range":[61,105]},"range":[45,105]}],"range":[16,115]},"generator":false,"expression":false,"async":false,"range":[0,115]}');
     });
 
-    it('test10', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
-        '    let a = x + 1;\n' +
-        '    let b = a + y;\n' +
-        '    let c = 0;\n' +
-        '    \n' +
-        '    while (a < -z) {\n' +
-        '        c = a + b;\n' +
-        '        z = c * 2;\n' +
-        '    }\n' +
-        '    z = 5;\n' +
-        '    return z;\n' +
-        '}\n')), '["function foo(x, y, z) {","    while (x + 1 < -z) {","        z = (x + 1 + (x + 1 + y)) * 2;","    }","    z = 5;","    return z;","}"]');
+
+     it('test9', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+         '            let a = x + 1;\n' +
+         '            let b = a + y;\n' +
+         '            let c = 0;\n' +
+         '            \n' +
+         '            while (a < -z) {\n' +
+         '                c = a + b;\n' +
+         '                z = c * 2;\n' +
+         '            }\n' +
+         '            z = 5;\n' +
+         '            return z;\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[39,40]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"range":[39,48]}],"kind":"let","range":[35,49]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[66,67]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[66,75]}],"kind":"let","range":[62,76]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[93,94]},"init":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"range":[93,98]}],"kind":"let","range":[89,99]},{"type":"WhileStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"UnaryExpression","operator":"-","argument":{"type":"Identifier","name":"z","range":[137,138]},"prefix":true,"range":[136,138]},"range":[132,138]},"body":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[158,159]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[162,167]},"range":[158,167]},"range":[158,168]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"z","range":[185,186]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[162,167]},"right":{"type":"Literal","value":2,"raw":"2","range":[193,194]},"range":[189,194]},"range":[185,194]},"range":[185,195]}],"range":[140,209]},"range":[125,209]},{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"z","range":[222,223]},"right":{"type":"Literal","value":5,"raw":"5","range":[226,227]},"range":[222,227]},"range":[222,228]},{"type":"ReturnStatement","argument":{"type":"Identifier","name":"z","range":[248,249]},"range":[241,250]}],"range":[21,260]},"generator":false,"expression":false,"async":false,"range":[0,260]}');
     });
+
+
+
+     it('test10', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+         '            let a = x + 1;\n' +
+         '            let b = a + y;\n' +
+         '            let c = 0;\n' +
+         '            \n' +
+         '            if (b < z) {\n' +
+         '                c = c + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            } else if (b < z * 2) {\n' +
+         '                c = c + x + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            } else {\n' +
+         '                c = c + z + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            }\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[39,40]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"range":[39,48]}],"kind":"let","range":[35,49]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[66,67]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[66,75]}],"kind":"let","range":[62,76]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[93,94]},"init":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"range":[93,98]}],"kind":"let","range":[89,99]},{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"right":{"type":"Identifier","name":"z","range":[133,134]},"range":[129,134]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[154,155]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Literal","value":5,"raw":"5","range":[162,163]},"range":[158,163]},"range":[154,163]},"range":[154,164]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[188,189]},"right":{"type":"Identifier","name":"y","range":[192,193]},"range":[188,193]},"right":{"type":"Identifier","name":"z","range":[196,197]},"range":[188,197]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Literal","value":5,"raw":"5","range":[162,163]},"range":[158,163]},"range":[188,201]},"range":[181,202]}],"range":[136,216]},"alternate":{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"z","range":[230,231]},"right":{"type":"Literal","value":2,"raw":"2","range":[234,235]},"range":[230,235]},"range":[226,235]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[255,256]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"x","range":[263,264]},"range":[259,264]},"right":{"type":"Literal","value":5,"raw":"5","range":[267,268]},"range":[259,268]},"range":[255,268]},"range":[255,269]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[293,294]},"right":{"type":"Identifier","name":"y","range":[297,298]},"range":[293,298]},"right":{"type":"Identifier","name":"z","range":[301,302]},"range":[293,302]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"x","range":[263,264]},"range":[259,264]},"right":{"type":"Literal","value":5,"raw":"5","range":[267,268]},"range":[259,268]},"range":[293,306]},"range":[286,307]}],"range":[237,321]},"alternate":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[345,346]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"z","range":[353,354]},"range":[349,354]},"right":{"type":"Literal","value":5,"raw":"5","range":[357,358]},"range":[349,358]},"range":[345,358]},"range":[345,359]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[383,384]},"right":{"type":"Identifier","name":"y","range":[387,388]},"range":[383,388]},"right":{"type":"Identifier","name":"z","range":[391,392]},"range":[383,392]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"z","range":[353,354]},"range":[349,354]},"right":{"type":"Literal","value":5,"raw":"5","range":[357,358]},"range":[349,358]},"range":[383,396]},"range":[376,397]}],"range":[327,411]},"range":[222,411]},"range":[125,411]}],"range":[21,421]},"generator":false,"expression":false,"async":false,"range":[0,421]}');
+    });
+
+     it('test11', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+         '            let a = x + 1;\n' +
+         '            let b = a + y;\n' +
+         '            let c = 0;\n' +
+         '            \n' +
+         '            if (b < z && z === 5) {\n' +
+         '                c = c + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            } else if (b < z * 2) {\n' +
+         '                c = c + x + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            } else {\n' +
+         '                c = c + z + 5;\n' +
+         '                return x + y + z + c;\n' +
+         '            }\n' +
+         '        }')), '{"type":"FunctionDeclaration","id":{"type":"Identifier","name":"foo","range":[9,12]},"params":[{"type":"Identifier","name":"x","range":[13,14]},{"type":"Identifier","name":"y","range":[16,17]},{"type":"Identifier","name":"z","range":[19,20]}],"body":{"type":"BlockStatement","body":[{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"a","range":[39,40]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"range":[39,48]}],"kind":"let","range":[35,49]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"b","range":[66,67]},"init":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"range":[66,75]}],"kind":"let","range":[62,76]},{"type":"VariableDeclaration","declarations":[{"type":"VariableDeclarator","id":{"type":"Identifier","name":"c","range":[93,94]},"init":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"range":[93,98]}],"kind":"let","range":[89,99]},{"type":"IfStatement","test":{"type":"LogicalExpression","operator":"&&","left":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"right":{"type":"Identifier","name":"z","range":[133,134]},"range":[129,134]},"right":{"type":"BinaryExpression","operator":"===","left":{"type":"Identifier","name":"z","range":[138,139]},"right":{"type":"Literal","value":5,"raw":"5","range":[144,145]},"range":[138,145]},"range":[129,145]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[165,166]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Literal","value":5,"raw":"5","range":[173,174]},"range":[169,174]},"range":[165,174]},"range":[165,175]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[199,200]},"right":{"type":"Identifier","name":"y","range":[203,204]},"range":[199,204]},"right":{"type":"Identifier","name":"z","range":[207,208]},"range":[199,208]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Literal","value":5,"raw":"5","range":[173,174]},"range":[169,174]},"range":[199,212]},"range":[192,213]}],"range":[147,227]},"alternate":{"type":"IfStatement","test":{"type":"BinaryExpression","operator":"<","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[43,44]},"right":{"type":"Literal","value":1,"raw":"1","range":[47,48]},"range":[43,48]},"right":{"type":"Identifier","name":"y","range":[74,75]},"range":[70,75]},"right":{"type":"BinaryExpression","operator":"*","left":{"type":"Identifier","name":"z","range":[241,242]},"right":{"type":"Literal","value":2,"raw":"2","range":[245,246]},"range":[241,246]},"range":[237,246]},"consequent":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[266,267]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"x","range":[274,275]},"range":[270,275]},"right":{"type":"Literal","value":5,"raw":"5","range":[278,279]},"range":[270,279]},"range":[266,279]},"range":[266,280]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[304,305]},"right":{"type":"Identifier","name":"y","range":[308,309]},"range":[304,309]},"right":{"type":"Identifier","name":"z","range":[312,313]},"range":[304,313]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"x","range":[274,275]},"range":[270,275]},"right":{"type":"Literal","value":5,"raw":"5","range":[278,279]},"range":[270,279]},"range":[304,317]},"range":[297,318]}],"range":[248,332]},"alternate":{"type":"BlockStatement","body":[{"type":"ExpressionStatement","expression":{"type":"AssignmentExpression","operator":"=","left":{"type":"Identifier","name":"c","range":[356,357]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"z","range":[364,365]},"range":[360,365]},"right":{"type":"Literal","value":5,"raw":"5","range":[368,369]},"range":[360,369]},"range":[356,369]},"range":[356,370]},{"type":"ReturnStatement","argument":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Identifier","name":"x","range":[394,395]},"right":{"type":"Identifier","name":"y","range":[398,399]},"range":[394,399]},"right":{"type":"Identifier","name":"z","range":[402,403]},"range":[394,403]},"right":{"type":"BinaryExpression","operator":"+","left":{"type":"BinaryExpression","operator":"+","left":{"type":"Literal","value":0,"raw":"0","range":[97,98]},"right":{"type":"Identifier","name":"z","range":[364,365]},"range":[360,365]},"right":{"type":"Literal","value":5,"raw":"5","range":[368,369]},"range":[360,369]},"range":[394,407]},"range":[387,408]}],"range":[338,422]},"range":[233,422]},"range":[125,422]}],"range":[21,432]},"generator":false,"expression":false,"async":false,"range":[0,432]}');
+    });
+
+     /*it('test9', () => {assert.equal(JSON.stringify(parseCode('')), '');
+    });
+     it('test3', () => {assert.equal(JSON.stringify(parseCode('function foo(x, y, z){\n' +
+        '   let a = x + 1;\n' +
+        '   let b = a + y;\n' +
+        '   let c = 0;\n' +
+        '   \n' +
+        '   while (a < z) {\n' +
+        '       c = a + b;\n' +
+        '       z = c * 2;\n' +
+        '       a++;\n' +
+        '   }\n' +
+        '   \n' +
+        '   return z;\n' +
+        '}\n')), '');
+    });*/
 
     /*it('test5', () => {assert.equal(JSON.stringify(parseCode('')), '');
     });*/
