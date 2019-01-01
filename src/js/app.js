@@ -14,7 +14,6 @@ $(document).ready(function () {
         let codeToParse = $('#codePlaceholder').val();
         inputVector = $('#inputVector').val()===''?null:JSON.parse($('#inputVector').val());
         let parsedCode = parseCode(codeToParse);
-        $('#codePlaceholder').val(JSON.stringify(parsedCode));
         let cfg = cleanCFG(esgraph(parsedCode.body));
         for(let i = 0; i < cfg[2].length; i++) {
             cfg[2][i].indexInGraph = i;
@@ -68,8 +67,8 @@ let drawCFG = (node,draw) =>{
         return node;
     if(draw)
         node = handleDraw(node);
-    else
-        node = continueDrawing(node,draw);
+
+    node = continueDrawing(node,draw);
     return node;
 };
 
@@ -90,6 +89,7 @@ const continueDrawing = (node,draw) => {
         for (let i = 0; i < node.next.length; i++)
             node.next[i] = drawCFG(node.next[i], draw);
     }
+    return node;
 };
 
 const ifWhileSigns = ['===','>','<','==','>=','<=','&&','||'];
